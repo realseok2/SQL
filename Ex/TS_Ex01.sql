@@ -109,3 +109,81 @@ SELECT
     (salary*12+5000) "연봉2",
     phone_number "전화번호"
 FROM employees;
+
+--  13. 이름이 Lex인 직원의 연봉을 출력하세요.                                                                                   (x)       employees 뒤에 ;를 안지웠음, first_name = 'Lex'를 생각해내지 못했음.
+select
+    salary "연봉"
+from employees
+where first_name = 'Lex';
+
+--  14. 사원의 이름(first_name)과 전화번호, 입사일, 연봉을 출력하세요.                                                             (O)
+SELECT
+    first_name,
+    phone_number,
+    hire_date,
+    salary
+FROM employees;
+
+--  15. 담당 매니저가 없고 커미션 비율이 없는 직원의 이름을 출력하세요.                                                              (O)
+SELECT
+    first_name || '-' || last_name "이름"
+FROM employees
+where
+    manager_id is null
+and commission_pct is null;
+
+--  16. 연봉이 2100, 3100, 4100, 5100인 사원의 이름과 연봉을 구하시오.                                                            (O)
+SELECT
+    first_name,
+    salary
+FROM employees
+where
+    salary in (2100, 3100, 4100, 5100);
+
+--  17. 이름에 am을 포함한 사원의 이름과 연봉을 출력하세요.                                                                        (O)
+SELECT
+    first_name,
+    salary
+FROM employees
+where
+    first_name like '%am%';
+
+--  18. 연봉이 15000 이상인 사원들의 이름과 연봉을 출력하세요.                                                                     (O)
+SELECT
+    first_name,
+    salary
+FROM employees
+where salary >= 15000;
+
+--  19. 부서번호를 오름차순으로 정렬하고 부서번호가 같으면 급여가 높은 사람부터 부서번호와 급여, 이름을 출력하세요.                       (O)      and가 아니고 ,로 연결합니다.
+SELECT
+    department_id,
+    salary,
+    first_name
+FROM employees
+order by
+    department_id asc,
+    salary desc;
+
+--  20. 이름이 4글자인 사원 중 끝에서 두 번째 글자가 a인 사원의 이름을 출력하세요.                                                    (O)
+SELECT
+    first_name
+FROM employees
+where first_name like '__a_';
+
+--  21. 입사일이 04/01/01에서 05/12/31 사이인 사원의 이름과 입사일을 출력하세요. ( 2가지 방법을 사용하세요.)                           (O) 
+--  1번째 방법
+SELECT
+    first_name,
+    hire_date
+FROM employees
+where
+    hire_date >= '04/01/01'
+and hire_date <= '05/12/31';
+
+--  2번째 방법
+SELECT
+    first_name,
+    hire_date
+FROM employees
+where hire_date between '04/01/01' and '05/12/31';
