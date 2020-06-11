@@ -1,0 +1,222 @@
+--  Practice05  2020년 06월 11일
+--  혼합 SQL 문제입니다.
+--------------------------------------------------------------------------------------------------------------------------------(O)
+--  문제1. 담당 매니저가 배정되어 있으나, 커미션 비율이 없고 월급이 3000 초과인
+--        직원의 이름, 매니저아이디, 커미션비율, 월급을 출력하세요.                                                              (45건)
+SELECT
+    employee_id "사번",
+    first_name "이름",
+    manager_id "매니저아이디",
+    commission_pct "커미션비율",
+    salary "급여"
+FROM employees
+where   manager_id is not null
+and     commission_pct is null
+and     salary > 3000;
+
+--------------------------------------------------------------------------------------------------------------------------------(O)
+--  문제2. 각 부서별로 최고의 급여를 받는 사원의 사번, 이름, 급여, 입사일, 전화번호, 부서번호를 조회하세요.
+--        조건절비교 방법으로 작성하세요.
+--        급여의 내림차순으로 정렬하세요.
+--        입사일은 2001-01-13 토요일 형식으로 출력합니다.
+--        전화번호는 515-123-4567 형식으로 출력합니다.
+--        (employee_id, first_name, salary, hire_date, phone_number, department_id)                                        (11건)
+
+--  1단계. 각 부서별로 최고의 급여를 받는 사원을 출력하는 코드를 작성합니다.
+SELECT
+    max(salary)
+FROM employees
+group by    department_id
+having      department_id is not null;
+
+--  2단계. 1단계에서 작성한 코드를 이용하여 해당되는 사원들의 정보를 출력하세요.
+SELECT
+    employee_id "사번",
+    first_name "이름",
+    salary "급여",
+    to_char(hire_date, 'yyyy-mm-dd day') "입사일",
+    replace(phone_number, '.', '-') "전화번호",
+    department_id "부서번호"
+FROM employees
+where (department_id, salary) in    (SELECT department_id,
+                                            max(salary)
+                                    FROM employees
+                                    group by    department_id
+                                    having      department_id is not null)
+order by salary desc;
+
+-------------------------------------------------------------------------------------------------------------------------------- 문제 변경됨 --> 질문 후 해결(O)
+--  문제3. 매니저별로 평균급여, 최소급여, 최대급여를 알아보고자 합니다.
+--        통계대상인 사원은 2005년 이후 입사자입니다.
+--        매니저별 평균급여가 5000 이상만 출력합니다.
+--        매니저별 평균급여의 내림차순으로 정렬하여 출력합니다.
+--        매니저별 평균급여는 소수점 첫째자리에서 반올림합니다.
+--        출력 내용은 매니저아이디, 매니저이름, 매니저별 평균급여, 최소급여, 최대급여입니다.                                          (9건)
+
+-- 매니저별 평균, 최고, 최소 급여
+select  
+    emid "매니저아이디",
+    man.first_name "매니저이름",
+    emsal "평균급여",
+    emmax "최대급여",
+    emmin "최소급여"
+from  employees man,    (SELECT
+                            manager_id emid,
+                            round(avg(salary),0) emsal,
+                            max(salary) emmax,
+                            min(salary) emmin
+                        FROM employees
+                        where hire_date >= '06/01/01'
+                        group by    manager_id
+                        having      avg(salary) >= 5000
+                        order by    avg(salary) desc) em
+where   emid = man.employee_id;
+
+--------------------------------------------------------------------------------------------------------------------------------(O)
+--  문제4. 각 사원에 대하여 사번, 이름, 부서명, 매니저의이름을 조회하세요.
+--        부서가 없는 직원(Kimberely)도 표시합니다.                                                                          (106건)
+
+SELECT
+    emp.employee_id "사번",
+    emp.first_name "이름",
+    dep.department_name "부서명",
+    man.first_name "매니저의이름"
+FROM    employees emp, departments dep, employees man
+where   dep.department_id(+) = emp.department_id
+and     emp.manager_id = man.employee_id
+order by emp.first_name asc;
+
+--------------------------------------------------------------------------------------------------------------------------------(O)
+--  문제5. 2005년 이후 입사한 직원 중에 입사일이 11번째에서 20번째인 직원의
+--        사번, 이름, 부서명, 급여, 입사일을 입사일의 순서대로 출력하세요.
+
+--  1단계. 2005년 이후 입사한 직원들을 오름차순으로 정렬하는 코드를 작성합니다.
+SELECT
+    hire_date
+FROM employees
+where hire_date >= '06/01/01'
+order by hire_date asc;
+
+--  2단계. 1단계에서 구한 코드를 이용하여 rownum을 사용하여 번호를 매깁니다.
+SELECT
+    rownum rn,
+    hire_date
+FROM    (SELECT
+            hire_date
+        FROM employees
+        where hire_date >= '06/01/01'
+        order by hire_date asc);
+
+--  3단계. 2단계에서 매긴 번호를 토대로 11번째에서 20번째까지의 사원의 정보를 출력합니다.
+SELECT
+    rn "순서번호",
+    employee_id "사번",
+    first_name "이름",
+    department_name "부서명",
+    salary "급여",
+    hire_date "입사일"
+FROM    (SELECT
+            rownum rn,
+            employee_id,
+            first_name,
+            department_name,
+            salary,
+            hire_date
+        FROM    (SELECT
+                    employee_id,
+                    first_name,
+                    department_name,
+                    salary,
+                    hire_date
+                FROM employees, departments
+                where hire_date >= '06/01/01'
+                order by hire_date asc)
+        )
+where   rn >= 11
+and     rn <= 20;
+
+--------------------------------------------------------------------------------------------------------------------------------(O)
+--  문제6. 가장 늦게 입사한 직원의 이름과 연봉, 근무하는 부서의 이름을 출력하세요.
+--        이름        연봉      부서이름        HIRE_DATE
+--    Amit Banda     6200       Sales         08/04/21
+--  Sundita Kumar    6100       Sales         08/04/21
+
+--  1단계. Sales 부서에 가장 마지막에 입사한 사원의 입사일을 출력하는 코드를 작성합니다.
+SELECT
+    department_name,
+    max(hire_date)
+FROM employees, departments
+group by department_name
+having department_name in ('Sales');
+
+--  2단계. 1단계에서 구한 코드를 이용하여 해당되는 사원의 정보를 출력하는 코드를 작성합니다.
+SELECT
+    first_name||' '||last_name "이름",
+    salary "연봉",
+    department_name "부서이름",
+    hire_date "입사일"
+FROM employees, departments
+where   (department_name, hire_date) in (SELECT
+                                            department_name,
+                                            max(hire_date)
+                                        FROM employees, departments
+                                        group by department_name
+                                        having department_name in ('Sales')
+                                        );
+
+-------------------------------------------------------------------------------------------------------------------------------- 좀 이따 다시 풀 것 
+--  문제7. 평균연봉이 가장 높은 부서 직원들의 직원번호, 이름, 성과 업무이름, 연봉을 조회하세요.
+--        사번        이름      성       급여      AVG_SALARY           JOB_TITLE
+--        101        Neena  Kochhar    17000    19333.3333333333333   Administration Vice President
+--        102        Lex    De Haan    17000    19333.3333333333333   Administration Vice President
+--        100       Steven   King      24000    19333.3333333333333   President
+--        (avg(salary), employee_id, first_name, last_name, job_title, salary)
+
+
+
+
+
+
+
+
+
+
+
+-------------------------------------------------------------------------------------------------------------------------------- 다시 풀어
+--  문제8. 평균 급여가 가장 높은 부서를 출력하세요.
+--        DEPARTMENT_NAME
+--           Executive
+
+
+
+
+
+
+
+
+
+
+
+
+
+--------------------------------------------------------------------------------------------------------------------------------
+--  문제9. 평균 급여가 가장 높은 지역을 출력하세요.
+--      REGION_NAME
+--        Europe
+
+
+
+
+
+
+
+--------------------------------------------------------------------------------------------------------------------------------(O)
+--  문제10. 평균 급여가 가장 높은 업무를 출력하세요.
+--        JOB_TITLE
+--        President
+
+
+
+
+
+

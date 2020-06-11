@@ -1,0 +1,326 @@
+--  Practice04  2020년 06월 10일
+--  서브쿼리(SUBQUERY) SQL 문제입니다.
+--------------------------------------------------------------------------------------------------------------------------------(O)
+
+--  문제1. 평균 급여보다 적은 급여를 받는 직원은 몇 명인지 구하세요.                                                              (56건)
+--  COUNT(SALARY)
+--            56
+
+--  1단계. 평균급여를 구하는 코드를 작성합니다.
+SELECT
+    round(avg(salary))
+FROM employees;
+
+--  2단계. 1단계에서 구한 코드와 비교하여 그보다 더 적은 급여를 받는 직원의 수를 구합니다.
+SELECT
+    count(*)
+FROM employees
+where salary < (SELECT
+                   round(avg(salary))
+                FROM employees);
+              
+--------------------------------------------------------------------------------------------------------------------------------(O)              
+--  문제2. 평균급여 이상, 최대급여 이하의 월급을 받는 사원의 직원번호, 이름, 급여, 평균급여, 최대급여를
+--        급여의 오름차순으로 정렬하여 출력하세요.                                                                              (51건)
+--        (employee_id, first_name, salary, avg(salary), max(salary)
+
+--  1단계. 평균급여를 구하는 코드를 작성합니다.
+SELECT
+    round(avg(salary))
+FROM employees;
+
+--  2단계. 최대급여를 구하는 코드를 작성합니다.
+SELECT
+    max(salary)
+FROM employees;
+
+--  3단계. 1단계, 2단계에서 작성한 코드를 이용하여 사이 범위의 직원들의 정보를 출력하는 코드를 작성합니다.
+SELECT
+    employee_id,
+    first_name,
+    salary
+FROM employees
+where salary >= (SELECT
+                    round(avg(salary))
+                FROM employees)
+and   salary <= (SELECT
+                    max(salary)
+                FROM employees)
+order by salary asc;
+              
+--------------------------------------------------------------------------------------------------------------------------------(X) 못풀었음......다시풀어라 마지막줄오류.........             
+--  문제3. 직원 중 Steven king이 소속된 부서가 있는 곳의 주소를 알아보려고 합니다.
+--        도시아이디, 거리명, 우편번호, 도시명, 주, 나라아이디를 출력하세요.                                                       (1건)
+--  LOCATION_ID     STREET_ADDRESS      POSTAL_CODE     CITY        STATE_PROVINCE      COUNNTRY_ID
+--         1700    2004 Charade Rd            98199   Seattle           Washington               US
+
+--  1단계. Steven king이 소속된 부서를 구하는 코드를 작성하세요.
+SELECT
+    department_id
+FROM employees
+where first_name in ('Steven')
+and   last_name in  ('King');
+
+--  2단계. departments 테이블에 employees 테이블을 연결합니다.
+SELECT
+    e.department_id
+FROM departments d left outer join (SELECT
+                                    department_id
+                                 FROM employees
+                                 where first_name in ('Steven')
+                                 and   last_name in  ('King')) e
+on d.department_id = e.department_id
+where e.department_id is not null;
+
+--  3단계. 2단계에서 구한 코드를 이용하여 그 중 1번째 값만 추출해냅니다.
+SELECT
+    lo.location_id "도시아이디",
+    lo.street_address "거리명",
+    lo.postal_code "우편번호",
+    lo.city "도시명",
+    lo.state_province "주",
+    lo.country_id "나라아이디"
+FROM locations lo, ( SELECT
+                            e.department_id
+                    FROM    departments d left outer join ( SELECT  department_id
+                                                            FROM    employees
+                                                            where   first_name in ('Steven')
+                                                            and     last_name in  ('King')) e
+                                          on d.department_id = e.department_id
+                    where e.department_id is not null) ed
+where ed.location_id = lo.location_id;
+
+
+
+
+
+
+
+
+
+
+
+-- 1. em에서 이름에 대한 부서찾기
+SELECT  department_id
+FROM    employees
+where   first_name in ('Steven')
+and     last_name in  ('King');
+
+-- 2.
+select  lo.location_id "도시아이디",
+        lo.street_address "거리명",
+        lo.postal_code "우편번호",
+        lo.city "도시명",
+        lo.state_province "주",
+        lo.country_id "나라아이디"
+from    employees em, departments de, locations lo
+where   em.department_id = de.department_id
+and     de.location_id = lo.location_id
+and     em.employee_id = (SELECT    employee_id
+                            FROM    employees
+                            where   first_name in ('Steven')
+                            and     last_name in  ('King'));
+
+-- 3.
+select      *
+from       (select      em.first_name,
+                        em.last_name,
+                        lo.location_id,
+                        lo.street_address,
+                        lo.postal_code,
+                        lo.city,
+                        lo.state_province,
+                        co.country_id
+            from        employees em, departments de, locations lo, countries co
+            where       em.department_id = de.department_id
+            and         de.location_id = lo.location_id
+            and         lo.country_id = co.country_id)
+where       first_name in ('Steven')
+and         last_name in ('King');
+
+--------------------------------------------------------------------------------------------------------------------------------(O)              
+--  문제4. job_id가 'ST_MAN'인 직원의 급여보다 적은 직원의 사번, 이름, 급여를
+--        급여의 내림차순으로 출력하세요. [any연산자를 사용]                                                                    (74건) 
+
+--  1단계. job_id가 'ST_MAN'인 직원의 급여를 구하는 코드를 작성합니다.
+SELECT
+    salary
+FROM employees
+where job_id in ('ST_MAN');
+
+--  2단계. 1단계에서 구한 코드와 비교하여 그보다 적은 급여를 받는 직원들의 정보를 출력합니다.
+SELECT
+    employee_id "사번",
+    first_name "이름",
+    salary "급여",
+    job_id "업무아이디"
+FROM employees
+where salary < any (SELECT
+                        salary
+                    FROM employees
+                    where job_id in ('ST_MAN'))
+order by salary desc;
+
+--------------------------------------------------------------------------------------------------------------------------------(X)              
+--  문제5. 각 부서별로 최고의 급여를 받는 사원의 직원번호, 이름, 급여, 부서번호를 조회하세요.
+--        단, 조회 결과는 급여의 내림차순으로 정렬되어 나타나야합니다.
+--        조건절비교, 테이블조인 2가지 방법으로 작성하세요.                                                                      (11건)
+
+--  1번째 방법 >> 조건절 비교
+--  1단계. 각 부서 별 최고 급여를 구하는 코드를 작성합니다.
+SELECT      department_id,
+            max(salary)
+FROM        employees
+group by    department_id
+having      department_id is not null;
+
+--  2단계. 1단계에서 구한 코드를 이용하여 해당 직원들의 정보를 출력하세요.
+SELECT      department_id "부서아이디",
+            employee_id "사번",
+            first_name "이름",
+            salary "급여"    
+FROM        employees
+where       salary = any(SELECT
+                          max(salary)
+                       FROM employees
+                       group by department_id
+                       having department_id is not null) 
+order by salary desc;          
+------
+select      department_id "부서아이디",
+            employee_id "사번",
+            first_name "이름",
+            salary "급여"
+from        employees
+where       (department_id, salary) in (SELECT      department_id,
+                                                    max(salary)
+                                        FROM        employees
+                                        group by    department_id
+                                        having      department_id is not null)
+order by    salary desc;
+            
+            
+            
+            
+              
+              
+              
+              
+              
+              
+--  2번째 방법 >> 테이블 조인 
+--  1단계. 각 부서별 최고 급여를 구하는 코드를 작성합니다.
+SELECT
+    department_id "부서번호",
+    max(salary)
+FROM employees
+group by department_id
+having department_id is not null;
+
+--  2단계. 1단계에서 구한 코드를 이용하여 table join방식으로 해당되는 직원들의 정보를 추출합니다.
+SELECT
+    e.employee_id,
+    e.first_name,
+    e.salary,
+    e.department_id
+FROM (SELECT
+        department_id "부서번호",
+        max(salary)
+     FROM employees
+     group by department_id) d, left outer join employees e
+                                on d."부서번호" = e.department_id
+                                having department_id is not null;
+
+
+
+--------------------------------------------------------------------------------------------------------------------------------시발 못풀겠다 좆됨
+
+--------------------------------------------------------------------------------------------------------------------------------(O) --> 질문 후 해결              
+--  문제6. 각 업무별로 연봉의 총 합을 구하고자 합니다.
+--        연봉 총합이 가장 높은 업무부터 업무명(job_title)과 연봉 총합을 조회하세요.                                              (19건)
+
+--  1단계. 연봉의 총합을 구하는 코드를 작성합니다.
+SELECT
+    job_id,
+    sum(salary)
+FROM employees
+group by job_id
+having job_id is not null;
+
+--  2단계. 1단계에서 구한 코드를 이용하여 총합의 내림차순으로 업무명과 함께 출력합니다.
+SELECT
+    j.job_title "업무명",
+    e.jsum "연봉 총합"
+FROM jobs j, (SELECT
+                  job_id,
+                  sum(salary) jsum
+              FROM employees
+              group by job_id
+              having job_id is not null) e
+where e.job_id = j.job_id
+order by e.jsum desc;
+              
+--------------------------------------------------------------------------------------------------------------------------------못풀었음.......씨발....ㅠㅠ              
+--  문제7. 자신의 부서 평균 급여보다 연봉이 많은 직원의 직원번호와 이름, 급여를 조회하세요.                                          (38건)
+
+--  1단계. 부서별 평균 급여를 구하는 코드를 작성합니다.
+SELECT
+    department_id "부서아이디",
+    round(avg(salary)) "평균급여"
+FROM employees
+group by department_id
+having department_id is not null;
+
+--  2단계. 1단계에서 구한 코드를 이용하여 해당 급여보다 연봉이 많은 직원의 정보를 출력합니다.
+SELECT
+    department_id "부서번호",
+    employee_id "직원번호",
+    first_name "이름",
+    salary "급여"
+FROM employees
+where salary > any(SELECT
+                    round(avg(salary))
+                FROM employees
+                group by department_id
+                having department_id is not null);            
+--------------------------------------------------------------------------------------------------------------------------------(O)              
+--  문제8. 직원 입사일이 11번째에서 15번째인 직원의 사번, 이름, 급여, 입사일을 입사일의 순서대로 출력하세요.
+
+--  1단계. 직원들의 입사일을 올림차순으로 정렬합니다.
+SELECT
+    hire_date
+FROM employees
+order by hire_date asc;
+
+--  2단계. 1단계에서 작성한 코드에서 입사일의 순서를 매깁니다.
+SELECT
+    rownum,
+    hire_date
+FROM (SELECT
+         hire_date
+      FROM employees
+      order by hire_date asc);
+      
+--  3단계. 2단계에서 매긴 번호를 토대로 입사일이 11 ~ 15번째인 사원의 정보를 출력합니다.
+SELECT
+    rn,
+    employee_id "사번",
+    first_name "이름",
+    salary "급여",
+    hire_date "입사일"
+FROM (SELECT
+          rownum rn,
+          employee_id,
+          first_name,
+          salary,
+          hire_date
+      FROM (SELECT
+                employee_id,
+                first_name,
+                salary,
+                hire_date
+            FROM employees
+            order by hire_date asc)
+     )
+where rn >= 11
+and   rn <= 15;
