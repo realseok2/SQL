@@ -172,6 +172,37 @@ where   (department_name, hire_date) in (SELECT
 --        100       Steven   King      24000    19333.3333333333333   President
 --        (avg(salary), employee_id, first_name, last_name, job_title, salary)
 
+--  1단계. 각 부서들의 평균 연봉을 구하는 코드를 작성합니다.
+SELECT
+    department_id,
+    avg(salary)
+FROM employees
+group by department_id;
+
+--  2단계. 1단계에서 구한 각 부서들의 평균 연봉 중 가장 큰 값을 뽑아냅니다.
+SELECT
+    max(salary)
+FROM    (SELECT
+            department_id,
+            avg(salary) salary
+        FROM employees
+        group by department_id);
+
+
+--  3단계. 2단계에서 구한 평균 연봉이 가장 높은 부서의 직원들의 정보를 출력합니다.
+SELECT
+    em.employee_id "사번",
+    em.first_name "이름",
+    em.last_name "성",
+    em.salary "급여"
+FROM    employees em,   (SELECT
+                            max(salary)
+                        FROM    (SELECT
+                                    department_id,
+                                    avg(salary) salary
+                                FROM employees
+                                group by department_id)
+                        );
 
 
 
@@ -182,41 +213,113 @@ where   (department_name, hire_date) in (SELECT
 
 
 
--------------------------------------------------------------------------------------------------------------------------------- 다시 풀어
+
+
+
+
+
+
+
+
+
+--  1단계.부서별 평균연봉을 구하는 코드를 작성합니다.
+SELECT
+    department_id,
+    avg(salary)
+FROM employees
+group by    department_id;
+
+--  2단계. 1단계에서 구한 코드를 이용하여 평균연봉이 가장 높은 부서를 골라냅니다.
+SELECT
+    max(savg)
+FROM    (SELECT
+            department_id,
+            avg(salary) savg
+        FROM employees
+        group by    department_id);
+        
+--  3단계. 2단계에서 구한 평균연봉이 가장 높은 부서에 해당되는 직원들의 정보를 출력합니다.
+
+
+
+
+
+
+--------------------------------------------------------------------------------------------------------------------------------다시 풀어라 --> (O)
 --  문제8. 평균 급여가 가장 높은 부서를 출력하세요.
 --        DEPARTMENT_NAME
 --           Executive
 
+--  1단계.    부서별 평균급여를 구하는 코드를 작성합니다.
+SELECT
+    department_id,
+    avg(salary)
+FROM employees
+group by    department_id;
 
+--  2단계.    평균급여가 가장 높은 부서의 평균급여를 확인합니다.
+SELECT
+    d.department_name,
+    e.salary
+FROM    departments d,  (SELECT
+                          department_id,
+                          avg(salary) salary
+                        FROM employees
+                        group by department_id) e
+where   e.department_id = d.department_id;
 
-
-
-
-
-
-
-
-
-
+--  3단계. 2단계에서 확인한 부서의 이름과 함께 출력합니다.
+SELECT
+    d.department_name
+FROM    departments d, (SELECT
+                          department_id,
+                          avg(salary) salary
+                      FROM employees
+                      group by department_id) e
+where   e.department_id = d.department_id
+and     e.salary = (SELECT
+                        max(avg(salary))
+                    FROM employees
+                    group by department_id);
 
 --------------------------------------------------------------------------------------------------------------------------------
 --  문제9. 평균 급여가 가장 높은 지역을 출력하세요.
 --      REGION_NAME
 --        Europe
 
+--  1단계. 지역별 평균급여를 구하는 코드를 작성합니다.
+SELECT
+    *
+FROM employees
+group by region_id;
 
 
 
 
 
-
---------------------------------------------------------------------------------------------------------------------------------(O)
+--------------------------------------------------------------------------------------------------------------------------------(O) --> 다시 풀어라
 --  문제10. 평균 급여가 가장 높은 업무를 출력하세요.
 --        JOB_TITLE
 --        President
 
+--  1단계. 업무별 평균 급여를 구하는 코드를 작성합니다.
+SELECT
+    job_id,
+    avg(salary)
+FROM employees
+group by job_id;
 
-
-
-
-
+--  2단계. 1단계에서 구한 코드를 이용하여 가장 높은 급여를 받는 업무를 출력합니다.
+SELECT
+    j.job_title
+FROM    jobs j, (SELECT
+                    job_id,
+                    avg(salary) salary
+                FROM employees
+                group by job_id
+                ) e
+where e.job_id = j.job_id
+and   e.salary =    (SELECT
+                        max(avg(salary))
+                    FROM employees
+                    group by job_id);
